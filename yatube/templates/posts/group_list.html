@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{%block title %}Записи сообщества {{ group.title }} {%endblock%}
+{% block content %}
+<div class="container py-5">
+  <h1>{{ group }}</h1>
+  <p>
+    {{ group.description|linebreaks }}
+  </p>
+  {% for post in page_obj %}
+    <article>
+      <ul>
+        <li>
+          Автор:
+          <a href="{% url 'posts:profile' post.author.username %}">
+            {{ post.author.get_full_name }}
+          </a>
+        </li>
+        <li>
+          Дата публикации: {{ post.pub_date|date:"d E Y" }}
+        </li>
+        <li>
+          <a href="{% url 'posts:post_detail' post.pk %}">подробная информация </a>
+        </li>
+      </ul>
+      <p>
+        {{ post.text|linebreaks }}
+      </p>
+    </article>
+    {% if not forloop.last %}<hr>{% endif %}
+  {% endfor %}
+</div>
+{% endblock %}
