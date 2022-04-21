@@ -4,6 +4,8 @@
 {% endblock %}
 {% block content %}
   <h1>Последние обновления на сайте</h1>
+  {% load cache %}
+  {% cache 20 index_page %}
   {% for post in page_obj %}
     <article>
       <ul>
@@ -27,5 +29,6 @@
         <hr>
       {% endif %}
   {% endfor %}
+  {% endcache %}
   {% include 'posts/includes/paginator.html' %}
 {% endblock %}

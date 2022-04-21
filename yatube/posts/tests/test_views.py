@@ -6,6 +6,7 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.cache import cache
 
 from ..models import Group, Post
 
@@ -170,6 +171,19 @@ class TaskPagesTests(TestCase):
             'posts:post_edit', args=[self.post.id]))
         post = response.context['is_edit']
         self.assertTrue(post)
+
+    def test_index_page_cache(self):
+        path = reverse('posts:index')
+        response = self.authorized_client.get(path)
+        content_before_delete = response.content
+        Post.objects.last().delete()
+        response = self.authorized_client.get(path)
+        content_after_delete = response.content
+        self.assertEqual(content_before_delete, content_after_delete)
+        cache.clear()
+        response = self.authorized_client.get(path)
+        content_after_cache_clear = response.content
+        self.assertNotEqual(content_after_cache_clear, content_before_delete)
 
 
 class PaginatorTests(TestCase):
