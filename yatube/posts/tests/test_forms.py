@@ -8,7 +8,8 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from ..models import Group, Post
+from ..models import Group, Post, Comment
+from ..forms import CommentForm
 
 User = get_user_model()
 
@@ -168,3 +169,50 @@ class PostFormTest(TestCase):
         self.assertEqual(post_last.text, context['text'])
         self.assertEqual(post_last.author, self.user)
         self.assertEqual(response.status_code, HTTPStatus.OK)
+
+
+class CommentFormTests(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = User.objects.create_user(username='test_user')
+        cls.group = Group.objects.create(
+            title='Тестовый заголовок',
+            slug='test-slug',
+            description='Тестовое описание',
+        )
+        cls.post = Post.objects.create(
+            author=cls.user,
+            text='Тестовый текст',
+            group=cls.group
+        )
+        cls.comment = Comment.objects.create(
+            author=cls.user,
+            text='Тестовый текст',
+            post=cls.post
+        )
+        cls.form = CommentForm()
+
+    def setUp(self):
+        self.guest_client = Client()
+        self.author_client = Client()
+        self.author_client.force_login(self.user)
+
+    def test_add_comment(self):
+        comment_count = Comment.objects.count()
+        form_data = {
+            'text': 'Тестовый комментарий',
+        }
+        response = self.author_client.post(
+            reverse('posts:add_comment', args=[self.post.id]),
+            data=form_data,
+            follow=True,
+        )
+        self.assertRedirects(
+            response, reverse('posts:post_detail', args=[self.post.id]))
+        self.assertEqual(Comment.objects.count(), comment_count + 1)
+        self.assertTrue(
+            Comment.objects.filter(
+                text=form_data['text'],
+            ).exists()
+        )

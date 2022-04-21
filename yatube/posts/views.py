@@ -3,8 +3,8 @@ from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
 
-from .models import Post, Group, User
-from .forms import PostForm
+from .models import Post, Group, User, Comment
+from .forms import PostForm, CommentForm
 
 
 def paginator(posts, request):
@@ -46,9 +46,12 @@ def profile(request, username):
 
 
 def post_detail(request, post_id):
-    post = get_object_or_404(Post, pk=post_id)
+    post = get_object_or_404(Post, id=post_id)
+    comments = Comment.objects.filter(post=post)
     context = {
-        'post': post
+        'post': post,
+        'form': CommentForm(),
+        'comments': comments
     }
     return render(request, 'posts/post_detail.html', context)
 
@@ -83,3 +86,14 @@ def post_edit(request, post_id):
         'is_edit': True,
         'post': post}
     return render(request, 'posts/create_post.html', context)
+
+@login_required
+def add_comment(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    form = CommentForm(request.POST or None)
+    if form.is_valid():
+        comment = form.save(commit=False)
+        comment.author = request.user
+        comment.post = post
+        comment.save()
+    return redirect('posts:post_detail', post_id=post_id)

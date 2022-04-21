@@ -2,8 +2,9 @@ from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
+from django.urls import reverse
 
-from ..models import Group, Post
+from ..models import Group, Post, Comment
 
 User = get_user_model()
 
@@ -94,3 +95,52 @@ class StaticURLTests(TestCase):
             with self.subTest(reverse_name=reverse_name):
                 response = self.authorized_author.get(reverse_name)
                 self.assertTemplateUsed(response, template)
+
+
+class CommentTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.author = User.objects.create_user(username='author')
+        cls.commentator = User.objects.create_user(username='commentator')
+        cls.commentator_client = Client()
+        cls.commentator_client.force_login(cls.commentator)
+        cls.post = Post.objects.create(
+            text='Тестовый текст поста',
+            author=cls.author
+        )
+        cls.comment = Comment.objects.create(
+            post=cls.post,
+            author=cls.commentator,
+            text='Тестовый текст комментария'
+        )
+
+    def test_comment(self):
+        """Проверка появления комментария к посту."""
+        self.assertTrue(
+            Comment.objects.filter(
+                post=self.post,
+                author=self.commentator,
+                text='Тестовый текст комментария'
+            ).exists
+        )
+        response = Comment.objects.filter(
+            post=self.post,
+            author=self.commentator,
+            text='Тестовый текст комментария'
+        ).count()
+        self.assertEqual(response, 1)
+
+    def test_comment_context(self):
+        """Комментировать посты может только авторизованный пользователь."""
+        response = self.commentator_client.get(
+            reverse('posts:post_detail', args=[self.post.id]))
+        comments = response.context['comments'][0]
+        expected_fields = {
+            comments.author.username: 'commentator',
+            comments.post.id: self.post.id,
+            comments.text: 'Тестовый текст комментария'
+        }
+        for fields, values in expected_fields.items():
+            with self.subTest(expected_fields=expected_fields):
+                self.assertEqual(fields, values)
