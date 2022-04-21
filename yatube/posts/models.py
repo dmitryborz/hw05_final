@@ -16,7 +16,9 @@ class Group(models.Model):
 
 
 class Post(models.Model):
-    text = models.TextField(verbose_name='Текст')
+    text = models.TextField(verbose_name='Текст поста',
+                            help_text='Введите текст поста'
+                            )
     pub_date = models.DateTimeField(auto_now_add=True,
                                     verbose_name='Дата публикации')
     author = models.ForeignKey(
@@ -31,11 +33,19 @@ class Post(models.Model):
         null=True,
         on_delete=models.SET_NULL,
         related_name="posts",
-        verbose_name='Группа'
+        verbose_name='Группа',
+        help_text='Выберите группу'
+    )
+    image = models.ImageField(
+        'Картинка',
+        upload_to='posts/',
+        blank=True
     )
 
     class Meta:
         ordering = ('-pub_date',)
+        verbose_name = 'Пост'
+        verbose_name_plural = 'Посты'
 
     def __str__(self):
         return self.text[:settings.TEST_LEN_TEXT]
