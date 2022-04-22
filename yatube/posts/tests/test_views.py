@@ -98,7 +98,7 @@ class TaskPagesTests(TestCase):
 
     def test_show_correct_context(self):
         """Проверка содержимого полей словаря response.context
-        на совпадение с ожидаемым результатом."""
+        на совпадение с ожидаемым результатом. """
         urls = [
             reverse('posts:index'),
             reverse('posts:group_list', kwargs={'slug': self.group.slug}),
