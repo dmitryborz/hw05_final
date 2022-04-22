@@ -110,10 +110,10 @@ def follow_index(request):
     post_list = Post.objects.filter(author__following__user=request.user.id)
     paginator = Paginator(post_list, settings.COUNT_POSTS)
     page_number = request.GET.get('page')
-    page = paginator.get_page(page_number)
+    page_obj = paginator.get_page(page_number)
     follow = True
     context = {
-        'page': page,
+        'page_obj': page_obj,
         'paginator': paginator,
         'follow': follow
     }
