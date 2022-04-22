@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 
 User = get_user_model()
@@ -16,7 +17,7 @@ class Group(models.Model):
 
 
 class Post(models.Model):
-    text = models.TextField(verbose_name='Текст поста',
+    text = models.TextField(verbose_name='Текст',
                             help_text='Введите текст поста'
                             )
     pub_date = models.DateTimeField(auto_now_add=True,
@@ -70,4 +71,19 @@ class Comment(models.Model):
     created = models.DateTimeField(
         'date_published',
         auto_now_add=True,
+    )
+
+
+class Follow(models.Model):
+    # пользователь, который подписывается
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='follower',
+    )
+    # пользователь, на которого подписываются
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='following',
     )

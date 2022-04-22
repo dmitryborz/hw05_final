@@ -8,7 +8,7 @@ from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.cache import cache
 
-from ..models import Group, Post
+from ..models import Group, Post, Follow
 
 User = get_user_model()
 
@@ -21,8 +21,14 @@ class TaskPagesTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create_user(username='StasBasov')
+        cls.user_other = User.objects.create_user(username='Gogen')
+        cls.user_another = User.objects.create_user(username='Biba')
         cls.authorized_client = Client()
         cls.authorized_client.force_login(cls.user)
+        cls.authorized_client_other = Client()
+        cls.authorized_client_other.force_login(cls.user_other)
+        cls.authorized_client_another = Client()
+        cls.authorized_client_another.force_login(cls.user_another)
         cls.small_gif = (
             b'\x47\x49\x46\x38\x39\x61\x02\x00'
             b'\x01\x00\x80\x00\x00\x00\x00\x00'
@@ -184,6 +190,32 @@ class TaskPagesTests(TestCase):
         response = self.authorized_client.get(path)
         content_after_cache_clear = response.content
         self.assertNotEqual(content_after_cache_clear, content_before_delete)
+
+    def test_follow(self):
+        form_data = {
+            'author': self.user,
+            'user': self.user_other
+        }
+        response = self.authorized_client_other.get(
+            reverse(
+                'posts:profile_follow',
+                kwargs={'username': self.user}
+            ),
+            data=form_data,
+            follow=True
+        )
+        self.assertRedirects(
+            response, reverse(
+                'posts:profile',
+                kwargs={'username': self.user}
+            )
+        )
+        self.assertTrue(
+            Follow.objects.filter(
+                user=self.user_other,
+                author=self.user
+            ).exists()
+        )
 
 
 class PaginatorTests(TestCase):
