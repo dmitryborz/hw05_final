@@ -192,6 +192,7 @@ class TaskPagesTests(TestCase):
         self.assertNotEqual(content_after_cache_clear, content_before_delete)
 
     def test_follow(self):
+        """Проверка profile_follow."""
         form_data = {
             'author': self.user,
             'user': self.user_other
