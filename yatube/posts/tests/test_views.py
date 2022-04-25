@@ -285,8 +285,7 @@ class PaginatorTests(TestCase):
         response = self.client.get(reverse(
             'posts:profile', kwargs={
                 'username': PaginatorTests.user.username,
-            }) + '?page=2'
-                                   )
+            }) + '?page=2')
         self.assertEqual(len(response.context['page_obj']),
                          settings.THREE_POSTS)
 
