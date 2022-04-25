@@ -85,7 +85,7 @@ class PostFormTest(TestCase):
         self.assertEqual(post_last.group.id, context['group'])
         self.assertEqual(post_last.author, self.user)
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertIsNotNone(post_last.image)
+        self.assertEqual(post_last.image, f'posts/{uploaded_image.name}')
 
     def test_edit_post(self):
         """При отправке валидной формы со страницы редактирования поста
@@ -191,7 +191,6 @@ class CommentFormTests(TestCase):
             text='Тестовый текст',
             post=cls.post
         )
-        cls.form = CommentForm()
 
     def setUp(self):
         self.guest_client = Client()
@@ -216,3 +215,21 @@ class CommentFormTests(TestCase):
                 text=form_data['text'],
             ).exists()
         )
+
+    def test_add_comment_guest(self):
+        comment_count = Comment.objects.count()
+        form_data = {
+            'text': 'Тестовый комментарий',
+        }
+        response = self.guest_client.post(
+            reverse('posts:add_comment', args=[self.post.id]),
+            data=form_data
+        )
+        self.assertRedirects(response,
+                             f"{reverse('users:login')}"
+                             f"?next="
+                             f"{reverse('posts:add_comment', args=[self.post.id])}"
+                             )
+        self.assertEqual(Comment.objects.count(), comment_count)
+
+

@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 
 User = get_user_model()
@@ -67,7 +68,7 @@ class Comment(models.Model):
         help_text='Введите ваш комментарий',
         max_length=200,
     )
-    created = models.DateTimeField(
+    pub_date = models.DateTimeField(
         'date_published',
         auto_now_add=True,
     )
@@ -86,3 +87,13 @@ class Follow(models.Model):
         on_delete=models.CASCADE,
         related_name='following',
     )
+    def save(self, *args, **kwargs):
+        if self.user == self.author:
+            raise ValidationError('Вы не можете подписаться на себя')
+        return super(Follow, self).save(*args, **kwargs)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["user", "author"],
+                                    name="unique_follow")
+        ]

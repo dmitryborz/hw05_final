@@ -8,7 +8,7 @@ from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.cache import cache
 
-from ..models import Group, Post, Follow
+from ..models import Group, Post, Follow, Comment
 
 User = get_user_model()
 
@@ -88,6 +88,8 @@ class TaskPagesTests(TestCase):
             reverse('posts:group_list',
                     kwargs={'slug': self.group.slug}):
                 'posts/group_list.html',
+            reverse('posts:follow_index'):
+                'posts/follow.html',
         }
         for reverse_name, template in templates_pages_names.items():
             with self.subTest(reverse_name=reverse_name):
@@ -179,6 +181,7 @@ class TaskPagesTests(TestCase):
         self.assertTrue(post)
 
     def test_index_page_cache(self):
+        """Кэширование страницы выполняется корректно."""
         path = reverse('posts:index')
         response = self.authorized_client.get(path)
         content_before_delete = response.content
@@ -265,7 +268,7 @@ class PaginatorTests(TestCase):
             'posts:group_list', kwargs={
                 'slug': PaginatorTests.group.slug
             }) + '?page=2'
-        )
+                                   )
         self.assertEqual(len(response.context['page_obj']),
                          settings.THREE_POSTS)
 
@@ -285,6 +288,55 @@ class PaginatorTests(TestCase):
             'posts:profile', kwargs={
                 'username': PaginatorTests.user.username,
             }) + '?page=2'
-        )
+                                   )
         self.assertEqual(len(response.context['page_obj']),
                          settings.THREE_POSTS)
+
+
+class CommentTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.author = User.objects.create_user(username='author')
+        cls.commentator = User.objects.create_user(username='commentator')
+        cls.commentator_client = Client()
+        cls.commentator_client.force_login(cls.commentator)
+        cls.post = Post.objects.create(
+            text='Тестовый текст поста',
+            author=cls.author
+        )
+        cls.comment = Comment.objects.create(
+            post=cls.post,
+            author=cls.commentator,
+            text='Тестовый текст комментария'
+        )
+
+    def test_comment(self):
+        """Проверка появления комментария к посту."""
+        self.assertTrue(
+            Comment.objects.filter(
+                post=self.post,
+                author=self.commentator,
+                text='Тестовый текст комментария'
+            ).exists
+        )
+        response = Comment.objects.filter(
+            post=self.post,
+            author=self.commentator,
+            text='Тестовый текст комментария'
+        ).count()
+        self.assertEqual(response, 1)
+
+    def test_comment_context(self):
+        """Проверка соответствия введенного комментария тому что появился,"""
+        response = self.commentator_client.get(
+            reverse('posts:post_detail', args=[self.post.id]))
+        comments = response.context['comments'][0]
+        expected_fields = {
+            comments.author.username: 'commentator',
+            comments.post.id: self.post.id,
+            comments.text: 'Тестовый текст комментария'
+        }
+        for fields, values in expected_fields.items():
+            with self.subTest(expected_fields=expected_fields):
+                self.assertEqual(fields, values)

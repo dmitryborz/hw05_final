@@ -63,7 +63,7 @@ def post_detail(request, post_id):
 
 @login_required
 def post_create(request):
-    form = PostForm(request.POST or None)
+    form = PostForm(request.POST or None, files=request.FILES or None)
     if form.is_valid():
         post = form.save(commit=False)
         post.author = request.user
@@ -108,14 +108,9 @@ def add_comment(request, post_id):
 @login_required
 def follow_index(request):
     post_list = Post.objects.filter(author__following__user=request.user.id)
-    paginator = Paginator(post_list, settings.COUNT_POSTS)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    follow = True
+    page_obj = paginator(post_list, request)
     context = {
         'page_obj': page_obj,
-        'paginator': paginator,
-        'follow': follow
     }
     return render(request, 'posts/follow.html', context)
 
@@ -134,8 +129,7 @@ def profile_follow(request, username):
 @login_required
 def profile_unfollow(request, username):
     author_username = get_object_or_404(User, username=username)
-    get_object_or_404(
-        Follow,
+    Follow.objects.filter(
         author=author_username,
         user=request.user
     ).delete()
