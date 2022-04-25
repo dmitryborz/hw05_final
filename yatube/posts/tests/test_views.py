@@ -267,8 +267,7 @@ class PaginatorTests(TestCase):
         response = self.client.get(reverse(
             'posts:group_list', kwargs={
                 'slug': PaginatorTests.group.slug
-            }) + '?page=2'
-                                   )
+            }) + '?page=2')
         self.assertEqual(len(response.context['page_obj']),
                          settings.THREE_POSTS)
 
@@ -277,8 +276,7 @@ class PaginatorTests(TestCase):
         response = self.client.get(reverse(
             'posts:profile', kwargs={
                 'username': PaginatorTests.user.username,
-            })
-        )
+            }))
         self.assertEqual(len(response.context['page_obj']),
                          settings.COUNT_POSTS)
 

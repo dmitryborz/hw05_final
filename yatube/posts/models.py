@@ -87,6 +87,7 @@ class Follow(models.Model):
         on_delete=models.CASCADE,
         related_name='following',
     )
+
     def save(self, *args, **kwargs):
         if self.user == self.author:
             raise ValidationError('Вы не можете подписаться на себя')

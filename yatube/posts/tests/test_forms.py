@@ -9,7 +9,6 @@ from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from ..models import Group, Post, Comment
-from ..forms import CommentForm
 
 User = get_user_model()
 
@@ -225,11 +224,10 @@ class CommentFormTests(TestCase):
             reverse('posts:add_comment', args=[self.post.id]),
             data=form_data
         )
+        args = [self.post.id]
         self.assertRedirects(response,
                              f"{reverse('users:login')}"
                              f"?next="
-                             f"{reverse('posts:add_comment', args=[self.post.id])}"
+                             f"{reverse('posts:add_comment', args=args)}"
                              )
         self.assertEqual(Comment.objects.count(), comment_count)
-
-

@@ -2,7 +2,6 @@ from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
-from django.urls import reverse
 
 from ..models import Group, Post
 
@@ -90,7 +89,7 @@ class StaticURLTests(TestCase):
             f'/profile/{self.author.username}/': 'posts/profile.html',
             f'/posts/{self.post.pk}/': 'posts/post_detail.html',
             f'/posts/{self.post.pk}/edit/': 'posts/create_post.html',
-            f'/follow/': 'posts/follow.html',
+            '/follow/': 'posts/follow.html'
         }
         for reverse_name, template in url_templates_names.items():
             with self.subTest(reverse_name=reverse_name):
@@ -100,7 +99,7 @@ class StaticURLTests(TestCase):
     def test_follow_usage(self):
         '''Страница follow доступна для авторизованного пользователя
         и не доступна для не авторизованного.'''
-        URL_FOLLOW = f'/follow/'
+        URL_FOLLOW = '/follow/'
         expected_status_code = [
             [URL_FOLLOW, 302, self.client],
             [URL_FOLLOW, 200, self.authorized_user],
