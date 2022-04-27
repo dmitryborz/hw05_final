@@ -317,10 +317,10 @@ class CommentTest(TestCase):
             reverse('posts:post_detail', args=[self.post.id]))
         comments = response.context['comments'][0]
         comment_obj = Comment.objects.filter(
-                post=comments.post.id,
-                author=comments.author,
-                text=comments.text
-            )
+            post=comments.post.id,
+            author=comments.author,
+            text=comments.text
+        )
         self.assertTrue(comment_obj.exists)
         response = comment_obj.count()
         self.assertEqual(response, 1)
