@@ -114,6 +114,7 @@ class TaskPagesTests(TestCase):
                 self.check_post_context(post)
 
     def test_post_detail_page_show_correct(self):
+        """Страница post_detail отображает нужный пост."""
         response = self.authorized_client.get(reverse(
             'posts:post_detail', args=[self.post.id]))
         post = response.context['post']
@@ -137,11 +138,13 @@ class TaskPagesTests(TestCase):
                     self.assertIsInstance(form_field, expected)
 
     def test_profile_show_correct_context(self):
+        """В профайле автора отображаются посты этого автора."""
         response = self.authorized_client.get(reverse(
             'posts:profile', args=[self.user.username]))
         self.assertEqual(self.user, response.context['author'])
 
     def test_check_post_in_group(self):
+        """В group_list отображаются посты нужной группы."""
         t_group = Group.objects.create(
             title='Заголовок',
             slug='test',
@@ -310,18 +313,16 @@ class CommentTest(TestCase):
 
     def test_comment(self):
         """Проверка появления комментария к посту."""
-        self.assertTrue(
-            Comment.objects.filter(
-                post=self.post,
-                author=self.commentator,
-                text='Тестовый текст комментария'
-            ).exists
-        )
-        response = Comment.objects.filter(
-            post=self.post,
-            author=self.commentator,
-            text='Тестовый текст комментария'
-        ).count()
+        response = self.commentator_client.get(
+            reverse('posts:post_detail', args=[self.post.id]))
+        comments = response.context['comments'][0]
+        comment_obj = Comment.objects.filter(
+                post=comments.post.id,
+                author=comments.author,
+                text=comments.text
+            )
+        self.assertTrue(comment_obj.exists)
+        response = comment_obj.count()
         self.assertEqual(response, 1)
 
     def test_comment_context(self):
@@ -329,11 +330,19 @@ class CommentTest(TestCase):
         response = self.commentator_client.get(
             reverse('posts:post_detail', args=[self.post.id]))
         comments = response.context['comments'][0]
+        form = response.context.get('form')
         expected_fields = {
             comments.author.username: 'commentator',
             comments.post.id: self.post.id,
             comments.text: 'Тестовый текст комментария'
         }
+        expected_fields_form = {
+            'text': forms.fields.CharField
+        }
         for fields, values in expected_fields.items():
             with self.subTest(expected_fields=expected_fields):
                 self.assertEqual(fields, values)
+        for value, expected in expected_fields_form.items():
+            with self.subTest(field=value):
+                form_field = form.fields.get(value)
+                self.assertIsInstance(form_field, expected)

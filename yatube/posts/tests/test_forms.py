@@ -197,6 +197,8 @@ class CommentFormTests(TestCase):
         self.author_client.force_login(self.user)
 
     def test_add_comment(self):
+        """Проверка добавления комментария к посту авторизованным
+        пользователем."""
         comment_count = Comment.objects.count()
         form_data = {
             'text': 'Тестовый комментарий',
@@ -216,6 +218,8 @@ class CommentFormTests(TestCase):
         )
 
     def test_add_comment_guest(self):
+        """Не авторизованный пользователь при попытке комментария
+        редиректится на страницу авторизации."""
         comment_count = Comment.objects.count()
         form_data = {
             'text': 'Тестовый комментарий',

@@ -101,18 +101,10 @@ class StaticURLTests(TestCase):
         и не доступна для не авторизованного.'''
         URL_FOLLOW = '/follow/'
         expected_status_code = [
-            [URL_FOLLOW, 302, self.client],
-            [URL_FOLLOW, 200, self.authorized_user],
+            [URL_FOLLOW, HTTPStatus.FOUND, self.client],
+            [URL_FOLLOW, HTTPStatus.OK, self.authorized_user],
         ]
         for url, status_code, client in expected_status_code:
             with self.subTest():
                 response = client.get(url)
                 self.assertEqual(response.status_code, status_code)
-
-    def test_comment_url_redirects_unauthorized_on_login(self):
-        """Неавторизованный пользователь при попытки коммента
-        редиректится на страницу авторизации."""
-        path = f'/posts/{self.post.pk}/comment/'
-        response = self.client.post(path, data={}, follow=True)
-        redirect_path = f'/auth/login/?next=/posts/{self.post.pk}/comment/'
-        self.assertRedirects(response, redirect_path)
